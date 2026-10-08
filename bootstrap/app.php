@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Enums\HttpStatusCode;
+use App\Exceptions\Handlers\BusinessExceptionHandler;
 use App\Helpers\ApiResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -17,22 +18,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 
-        $exceptions->render(function (
-            ValidationException $e,
-            Request $request
-        ) {
+        BusinessExceptionHandler::register($exceptions);
+
+
+        $exceptions->render(function (ValidationException $e, Request $request) {
+
             if (!$request->is('api/*')) {
                 return null;
             }
 
-            return ApiResponse::error(
-                "",
-                $e->errors(),
-                HttpStatusCode::UNPROCESSABLE_ENTITY
+            return ApiResponse::error("", $e->errors(), HttpStatusCode::UNPROCESSABLE_ENTITY
             );
         });
 

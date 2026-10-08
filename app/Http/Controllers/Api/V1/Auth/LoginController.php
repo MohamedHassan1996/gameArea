@@ -6,6 +6,7 @@ use App\Actions\Auth\LoginAction;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
+use App\Http\Resources\Api\V1\Auth\LoggedInUserResource;
 
 class LoginController extends Controller
 {
@@ -17,6 +18,8 @@ class LoginController extends Controller
 
         $user = $loginAction->execute($loginRequest->validated());
 
-        return ApiResponse::success($user);
+        $loginRequest->session()->regenerate();
+
+        return ApiResponse::success(new LoggedInUserResource($user));
     }
 }

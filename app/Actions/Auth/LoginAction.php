@@ -3,41 +3,41 @@
 namespace App\Actions\Auth;
 
 use App\Models\User;
+use App\Exceptions\Auth\InvalidCredentialsException;
+use App\Exceptions\Auth\InactiveAccountException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\SessionGuard;
 
-class LoginAction
+final class LoginAction
 {
-    public function execute(array $data): User
+    public function execute(array $credentials): User
     {
-        $credentials = [
-            'username' => $data['username'],
-            'password' => $data['password'],
-        ];
+        /** @var SessionGuard $guard */
+        $guard = Auth::guard('web');
 
-        // 1. Validate credentials without login
-        if (!Auth::validate($credentials)) {
-            throw ValidationException::withMessages([
-                'username' => ['Invalid username or password.'],
-            ]);
+        $inactive = false;
+
+        $authenticated = $guard->attemptWhen(
+            $credentials,
+            function (User $user) use (&$inactive): bool {
+                if (! $user->is_active) {
+                    $inactive = true;
+
+                    return false;
+                }
+
+                return true;
+            }
+        );
+
+        if (! $authenticated) {
+            if ($inactive) {
+                throw new InactiveAccountException();
+            }
+
+            throw new InvalidCredentialsException();
         }
 
-        // 2. Get user
-        $user = User::where('username', $data['username'])
-            ->firstOrFail();
-
-        // 3. Check account status
-        if (!$user->isActive()) {
-            throw ValidationException::withMessages([
-                'username' => ['Your account is inactive.'],
-            ]);
-        }
-
-        // 4. Login
-        Auth::attempt($credentials);
-
-        request()->session()->regenerate();
-
-        return $user;
+        return $guard->user();
     }
 }
