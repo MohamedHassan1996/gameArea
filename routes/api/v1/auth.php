@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::prefix('/auth')->middleware('locale')->group(function (): void {
+Route::prefix('/auth')->group(function (): void {
     Route::name('auth.')->group(function (): void {
         Route::post('/login', LoginController::class);
         Route::post('/logout', LogoutController::class)->middleware('auth:sanctum');

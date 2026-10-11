@@ -20,7 +20,7 @@ final class LoginAction
         $authenticated = $guard->attemptWhen(
             $credentials,
             function (User $user) use (&$inactive): bool {
-                if (! $user->is_active) {
+                if (! $user->isActive()) {
                     $inactive = true;
 
                     return false;
