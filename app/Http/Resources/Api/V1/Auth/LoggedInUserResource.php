@@ -12,10 +12,12 @@ class LoggedInUserResource extends JsonResource
         return [
             'name' => $this->name,
             'email' => $this->email,
-            /*'roles' => $this->getRoleNames(),
+            'role' => [
+                'name' => $this->roles()->first()->name,
+            ],
             'permissions' => $this->getAllPermissions()
                 ->pluck('name')
-                ->values(),*/
+                ->values(),
         ];
     }
 }
